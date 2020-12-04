@@ -10,6 +10,5 @@
 
     <color name="blue">#0202F2</color>
     <color name="orange">#F18733</color>
-    <color name="blue_glow">#0202F2</color>
-    <color name="background_color">#F0EEEF</color>
+    <color name="grey">#F0EEEF</color>
 </resources>
