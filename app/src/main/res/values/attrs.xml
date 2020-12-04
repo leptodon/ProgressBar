@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+<!--
     <declare-styleable name="CustomProgressBar" >
         <attr name="textasd" format="color"/>
     </declare-styleable>
+-->
+
+    <attr name="baseColor" format="reference" />
+    <attr name="altColor" format="reference" />
+    <attr name="mBackgroundColor" format="reference" />
+
 </resources>

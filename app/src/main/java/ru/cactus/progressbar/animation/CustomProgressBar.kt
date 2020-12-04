@@ -49,7 +49,7 @@ class CustomProgressBar @JvmOverloads constructor(
         private const val GLOW_STROKE_WIDTH: Int = 6
         private const val PADDING: Int = GLOW_STROKE_WIDTH / 2 + BODY_STROKE_WIDTH
         private const val BODY_LENGTH: Float = 240f
-        private const val NORMALIZED_GRADIENT_LENGTH: Float = BODY_LENGTH / 480f
+        private const val NORMALIZED_GRADIENT_LENGTH: Float = BODY_LENGTH / 720f
         private const val ROTATION_LENGTH: Float = 360f
         private const val ROTATION_DURATION: Long = 2000
         private const val TAIL_GROW_DURATION: Long = 4000
@@ -94,7 +94,7 @@ class CustomProgressBar @JvmOverloads constructor(
         mPaintGlow.set(mPaintBody)
         mPaintGlow.color = baseColor
         mPaintGlow.strokeWidth = mGlowStrokeWidthPx
-        mPaintGlow.alpha = 200
+        mPaintGlow.alpha = 250
         mPaintGlow.maskFilter = BlurMaskFilter(mBodyStrokeWidthPx, BlurMaskFilter.Blur.OUTER)
 
         mBodyGradientFromToColors = intArrayOf(Color.TRANSPARENT, baseColor)

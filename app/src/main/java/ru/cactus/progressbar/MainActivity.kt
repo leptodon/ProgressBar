@@ -13,7 +13,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
+        AppCompatDelegate.setDefaultNightMode(
+            AppCompatDelegate.MODE_NIGHT_NO)
         val cpb: CustomProgressBar = findViewById(R.id.bar)
         val switch = findViewById<Switch>(R.id.switch1) as Switch
         switch.setOnClickListener{
