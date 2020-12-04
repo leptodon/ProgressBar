@@ -1,12 +1,11 @@
 package ru.cactus.progressbar.animation
 
-import android.animation.AnimatorSet
-import android.animation.ObjectAnimator
-import android.animation.ValueAnimator
+import android.animation.*
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
 import android.util.DisplayMetrics
+import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.view.animation.LinearInterpolator
@@ -28,18 +27,19 @@ class CustomProgressBar @JvmOverloads constructor(
     private var mPaintGlow: Paint = Paint()
     private var mRect: RectF
     private lateinit var mBodyGradient: SweepGradient
-    private var mBodyGradientFromToColors: IntArray
-    private var mGradientFromToPositions: FloatArray
+    private lateinit var mBodyGradientFromToColors: IntArray
+    private lateinit var mGradientFromToPositions: FloatArray
     private var currentAngle by Delegates.notNull<Float>()
     private lateinit var animatorSet: AnimatorSet
 
     private var currentColor by Delegates.notNull<Int>()
 
-    private val backgroundColor: Int = ResourcesCompat.getColor(resources, R.color.background_color, null)
+    private val backgroundColor: Int =
+        ResourcesCompat.getColor(resources, R.color.background_color, null)
     private val blueColor: Int = ResourcesCompat.getColor(resources, R.color.blue, null)
     private val orangeColor: Int = ResourcesCompat.getColor(resources, R.color.orange, null)
 
-    private var drawState:Int = 0
+    private var drawState: Int = 0
 
 
     companion object {
@@ -76,33 +76,8 @@ class CustomProgressBar @JvmOverloads constructor(
             displayMetrics
         )
 
-        currentColor = blueColor
-
-        mPaintBackground.color = backgroundColor
-        mPaintBackground.strokeWidth = mBodyStrokeWidthPx
-        mPaintBackground.style = Paint.Style.STROKE
-
-        mPaintOrangeBackground.color = orangeColor
-        mPaintOrangeBackground.strokeWidth = mBodyStrokeWidthPx
-        mPaintOrangeBackground.style = Paint.Style.STROKE
-
         mRect = RectF()
-
-        mPaintBody.isAntiAlias = true
-        mPaintBody.color = currentColor
-        mPaintBody.strokeWidth = mBodyStrokeWidthPx
-        mPaintBody.style = Paint.Style.STROKE
-        mPaintBody.strokeJoin = Paint.Join.ROUND
-        mPaintBody.strokeCap = Paint.Cap.ROUND
-
-        mPaintGlow.set(mPaintBody)
-        mPaintGlow.color = currentColor
-        mPaintGlow.strokeWidth = mGlowStrokeWidthPx
-        mPaintGlow.alpha = 200
-        mPaintGlow.maskFilter = BlurMaskFilter(mBodyStrokeWidthPx, BlurMaskFilter.Blur.OUTER)
-
-        mBodyGradientFromToColors = intArrayOf(Color.TRANSPARENT, currentColor)
-        mGradientFromToPositions = floatArrayOf(0F, NORMALIZED_GRADIENT_LENGTH)
+        drawPaint(backgroundColor, blueColor)
     }
 
     fun handlerState(state: EngineState) {
@@ -142,20 +117,13 @@ class CustomProgressBar @JvmOverloads constructor(
             0 -> {
                 canvas?.drawArc(mRect, 0f, 360f, false, mPaintBackground)
                 canvas?.drawArc(mRect, 10f, currentAngle, false, mPaintBody)
-                canvas?.drawArc(mRect, currentAngle+10f, -10f, false, mPaintGlow)
+                canvas?.drawArc(mRect, currentAngle + 10f, -10f, false, mPaintGlow)
             }
             1 -> {
                 canvas?.drawArc(mRect, 0f, 360f, false, mPaintBackground)
             }
         }
-        mDraw(canvas)
         postInvalidateOnAnimation()
-    }
-
-    fun mDraw(canvas: Canvas?) {
-        if (canvas == null) {
-            return
-        }
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -194,23 +162,91 @@ class CustomProgressBar @JvmOverloads constructor(
 
     private fun cleanStart() {
         animatorSet = AnimatorSet()
-        animatorSet.play(createGrowTailAnimator()).with(createRotationAnimator())
+        animatorSet.play(createGrowTailAnimator())
+            .after(createChangeColorAnimator()).after(createRotationAnimator())
+//        animatorSet.playTogether(createGrowTailAnimator(), createRotationAnimator())
         animatorSet.duration = 4000
         animatorSet.start()
         growTail()
     }
 
-    private fun changeColor() {
-        currentColor = orangeColor
-        mPaintBody.color = orangeColor
-        mPaintGlow.color = orangeColor
-        mBodyGradientFromToColors = intArrayOf(Color.TRANSPARENT, orangeColor)
-        onSizeChanged(width,height,width,height)
+    private fun createChangeColorAnimator(): ValueAnimator {
+        val transitionColor: ValueAnimator = ValueAnimator.ofInt(
+            blueColor,
+            orangeColor
+        )
+        transitionColor.setEvaluator(ArgbEvaluator())
+        transitionColor.duration = 5
+        transitionColor.addUpdateListener {
+            ValueAnimator.AnimatorUpdateListener { animation ->
+                val newcolor: Int = animation.animatedValue as Int
+                drawPaint(backgroundColor, newcolor)
+            }
+        }
+        return transitionColor
     }
 
-    private fun changeColorAndStop(){
-        mPaintBackground.color = orangeColor
-        drawState = 1
+    private fun drawPaint(colorBack: Int, colorCircle: Int) {
+
+        mPaintBackground.color = colorBack
+        mPaintBackground.strokeWidth = mBodyStrokeWidthPx
+        mPaintBackground.style = Paint.Style.STROKE
+
+//        mPaintOrangeBackground.color = orangeColor
+//        mPaintOrangeBackground.strokeWidth = mBodyStrokeWidthPx
+//        mPaintOrangeBackground.style = Paint.Style.STROKE
+
+
+        mPaintBody.isAntiAlias = true
+        mPaintBody.color = colorCircle
+        mPaintBody.strokeWidth = mBodyStrokeWidthPx
+        mPaintBody.style = Paint.Style.STROKE
+        mPaintBody.strokeJoin = Paint.Join.ROUND
+        mPaintBody.strokeCap = Paint.Cap.ROUND
+
+        mPaintGlow.set(mPaintBody)
+        mPaintGlow.color = colorCircle
+        mPaintGlow.strokeWidth = mGlowStrokeWidthPx
+        mPaintGlow.alpha = 200
+        mPaintGlow.maskFilter = BlurMaskFilter(mBodyStrokeWidthPx, BlurMaskFilter.Blur.OUTER)
+
+        mBodyGradientFromToColors = intArrayOf(Color.TRANSPARENT, colorCircle)
+        mGradientFromToPositions = floatArrayOf(0F, NORMALIZED_GRADIENT_LENGTH)
+
         invalidate()
     }
+
+    private fun changeColor() {
+        createChangeColorAnimator().start()
+//        mPaintBody.color = orangeColor
+//        mPaintGlow.color = orangeColor
+////        val fadeColor: ObjectAnimator = ObjectAnimator.ofObject(mPaintBody, "color", ArgbEvaluator(), currentColor ) as ObjectAnimator
+////        fadeColor.duration = 5
+////        fadeColor.interpolator = LinearInterpolator()
+////        fadeColor.addUpdateListener { ValueAnimator.AnimatorUpdateListener {
+////            animation -> currentColor = animation.animatedValue as Int
+////            Log.d("TAG", animation.animatedValue.toString())
+////            invalidate()
+////        } }
+////        fadeColor.start()
+////        currentColor = orangeColor
+//        mBodyGradientFromToColors = intArrayOf(Color.TRANSPARENT, orangeColor)
+//        onSizeChanged(width, height, width, height)
+    }
+
+    private fun changeColorAndStop() {
+        createChangeColorAnimator().start()
+//        mPaintBackground.color = orangeColor
+//        drawState = 1
+//        invalidate()
+    }
+}
+
+enum class EngineState {
+    START,
+    START_SUCCESS,
+    START_TIMEOUT,
+    STOP,
+    STOP_SUCCESS,
+    STOP_TIMEOUT
 }
