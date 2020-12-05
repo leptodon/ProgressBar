@@ -11,4 +11,7 @@
     <color name="blue">#0202F2</color>
     <color name="orange">#F18733</color>
     <color name="grey">#F0EEEF</color>
+
+    <color name="colorsOrangeOrBlue">@color/blue</color>
+    <color name="colorsBlueOrOrange">@color/orange</color>
 </resources>
