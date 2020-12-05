@@ -3,22 +3,14 @@ package ru.cactus.progressbar.animation
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
-import android.annotation.SuppressLint
 import android.content.Context
-import android.content.res.Resources
-import android.content.res.TypedArray
 import android.graphics.*
 import android.util.AttributeSet
 import android.util.DisplayMetrics
-import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.view.animation.LinearInterpolator
-import androidx.annotation.AttrRes
-import androidx.annotation.ColorInt
-import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
-import androidx.core.content.res.use
 import ru.cactus.progressbar.R
 import kotlin.properties.Delegates
 
@@ -32,14 +24,13 @@ class CustomProgressBar @JvmOverloads constructor(
 
     private var mPaintBody: Paint = Paint()
     private var mPaintBackground: Paint = Paint()
-    private var mPaintOrangeBackground: Paint = Paint()
     private var mPaintGlow: Paint = Paint()
     private var mRect: RectF
     private lateinit var mBodyGradient: SweepGradient
     private var mBodyGradientFromToColors: IntArray
     private var mGradientFromToPositions: FloatArray
     private var currentAngle: Float = 0.0f
-    private lateinit var animatorSet: AnimatorSet
+    private var animatorSet: AnimatorSet
     private var drawState: DrawState = DrawState.BACKGROUND
     private var currentColor by Delegates.notNull<Int>()
 
@@ -50,6 +41,7 @@ class CustomProgressBar @JvmOverloads constructor(
         ResourcesCompat.getColor(resources, R.color.colorsBlueOrOrange, null)
 
     private lateinit var currentState: EngineState
+    private var block_thread: Boolean = false
 
     companion object {
         private const val BODY_STROKE_WIDTH: Int = 7
@@ -140,9 +132,10 @@ class CustomProgressBar @JvmOverloads constructor(
     }
 
     private fun growTail() {
-        val counterThread = Thread(Runnable {
+        Thread(Runnable {
             kotlin.run {
                 for (i in 30..BODY_LENGTH.toInt()) {
+                    block_thread = true
                     currentAngle = i.toFloat()
                     try {
                         Thread.sleep(16)
@@ -150,24 +143,18 @@ class CustomProgressBar @JvmOverloads constructor(
                         e.printStackTrace()
                     }
                 }
+                block_thread = false
                 when (currentState) {
                     EngineState.START -> changeColorTo(altColor)
                     EngineState.STOP -> changeColorTo(baseColor)
-//                    else -> changeColorTo(altColor)
+                    else -> changeColorTo(altColor)
                 }
             }
-        })
-        if (!counterThread.isAlive) {
-            counterThread.start()
-        }
+        }).start()
     }
 
     override fun onDraw(canvas: Canvas?) {
-        val left: Float = mPaddingPx
-        val top: Float = mPaddingPx
-        val right: Float = width - mPaddingPx
-        val bottom: Float = height - mPaddingPx
-        mRect.set(left, top, right, bottom)
+        mRect.set(mPaddingPx, mPaddingPx, width - mPaddingPx, height - mPaddingPx)
         canvas?.rotate(rotation, (width / 2).toFloat(), (height / 2).toFloat())
         when (drawState) {
             DrawState.ACTION -> {
@@ -217,8 +204,7 @@ class CustomProgressBar @JvmOverloads constructor(
     }
 
     private fun playStartAction() {
-        Log.d("currentAngle", "current angle = " + currentAngle)
-        if (!animatorSet.isRunning) {
+        if (!animatorSet.isRunning && !block_thread) {
             if (currentColor != baseColor) {
                 changeColorTo(baseColor)
             }
@@ -231,7 +217,7 @@ class CustomProgressBar @JvmOverloads constructor(
     }
 
     private fun playStopAction() {
-        if (!animatorSet.isRunning) {
+        if (!animatorSet.isRunning && !block_thread) {
             if (currentColor != altColor) {
                 changeColorTo(altColor)
             }
@@ -287,28 +273,6 @@ class CustomProgressBar @JvmOverloads constructor(
             }
         }
         onSizeChanged(width, height, width, height)
-    }
-
-
-    fun getColorFromTheme(id: Int): Int {
-        val typedValue: TypedValue = TypedValue()
-        var theme: Resources.Theme = context.getTheme()
-        theme.resolveAttribute(id, typedValue, true);
-        @ColorInt
-        val color: Int = typedValue.data
-        return color
-    }
-
-    @ColorInt
-    @SuppressLint("Recycle")
-    fun Context.themeColor(
-        @AttrRes themeAttrId: Int
-    ): Int {
-        return obtainStyledAttributes(
-            intArrayOf(themeAttrId)
-        ).use {
-            it.getColor(0, Color.MAGENTA)
-        }
     }
 }
 
